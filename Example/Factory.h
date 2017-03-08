@@ -14,6 +14,7 @@ class Factory
 	ObjectPool<Lifetime>  lifetimes;
 	ObjectPool<Camera>    cameras;
 	ObjectPool<Text>	  texts;
+	ObjectPool<Key>		  key;
 	ObjectPool<PlayerController> controllers;
 
 public:
@@ -73,7 +74,7 @@ public:
 
 		e->rigidbody->addImpulse(e->transform->getGlobalUp() * impulse);
 
-		e->lifetime->lifespan = 1.6f;
+		e->lifetime->lifespan = 1.5f;
 		
 		return e;
 	}
@@ -91,10 +92,12 @@ public:
 
 		e->text->sprite_id = font;
 		e->text->offset = vec2{ -24,-24 };
-		e->text->off_scale = vec2{.5f,.5f};
+		e->text->off_scale = vec2{ .5f,.5f };
 		e->text->setString("Player1");
 
-		e->transform->setLocalScale(vec2{48,48});
+		e->rigidbody->gravity = vec2{ 0,0 };
+		e->transform->setLocalScale(vec2{ 48,48 });
+		e->rigidbody->drag = 1;
 
 		e->sprite->sprite_id = sprite;
 
@@ -108,18 +111,25 @@ public:
 
 		e->transform = transforms.push();
 		e->rigidbody = rigidbodies.push();
+		e->lifetime = lifetimes.push();
 		e->sprite = sprites.push();
 		e->collider = colliders.push();
+		e->rigidbody->gravity = vec2{ 0,-80 };
+		e->rigidbody->drag = 1;
+		e->key = key.push();
 
 		e->transform->setLocalScale(vec2{ 48,48 });
+		e->transform->setLocalPosition(vec2{randRange(600,600), 600 });
+	//	e->transform->setLocalPosition(vec2::fromAngle(randRange(0, 360)*DEG2RAD)*(rand01() * 200 + 64));
 
-		e->transform->setGlobalPosition(vec2::fromAngle(randRange(0, 360)*DEG2RAD)*(rand01() * 200 + 64));
-
-		e->rigidbody->addSpin(rand01()*12-6);
-
+		//vec2{ rand01() * 800, 600 }; // random position at the top of the screen
+		//e->rigidbody->addSpin(rand01()*12-6);
+		
 		e->sprite->sprite_id = sprite;
+		e->lifetime->lifespan = 15.f;
 
-		return e;
+
+		return e;// please
 	}
 };
 

@@ -21,12 +21,16 @@ class GameState : public BaseState
 	Factory factory;
 	unsigned spr_space, spr_ship, spr_bullet, spr_roid, spr_font;
 	ObjectPool<Entity>::iterator currentCamera;
+	float timer = 0;
+	int roid_counter = 0;
+	int font;
+	bool objectiveFailed;
 
 public:
 	virtual void init()
 	{
 		spr_bullet = sfw::loadTextureMap("../res/bullet.png");
-		spr_space = sfw::loadTextureMap("../res/space.jpg");
+//		spr_space = sfw::loadTextureMap("../res/space.jpg");
 		spr_ship = sfw::loadTextureMap("../res/ship.png");
 		spr_roid = sfw::loadTextureMap("../res/rock.png");
 		spr_font = sfw::loadTextureMap("../res/font.png",32,4);
@@ -39,16 +43,20 @@ public:
 
 		// setup a default camera
 		currentCamera = factory.spawnCamera(800, 600, 1);
-		currentCamera->transform->setGlobalPosition(vec2{ 400, 300 });
+//		currentCamera->transform->setGlobalPosition(vec2{ 400, 300 });
+//		currentCamera->transform->setLocalPosition(vec2{ 400, 300 });
+		currentCamera->transform->setLocalPosition(vec2{ 400, 500 });
+		// Right border( 750, 500)  Center starting point( 400, 500 ) Left border( 50, 500 )
 
 		// call some spawning functions!
 		factory.spawnStaticImage(spr_space, 0, 0, 800, 600);
 
 		factory.spawnPlayer(spr_ship, spr_font);
 		factory.spawnAsteroid(spr_roid);
-		factory.spawnAsteroid(spr_roid);
-		factory.spawnAsteroid(spr_roid);
-		factory.spawnAsteroid(spr_roid);
+		//factory.spawnAsteroid(spr_roid);
+		//factory.spawnAsteroid(spr_roid);
+		//factory.spawnAsteroid(spr_roid);
+		objectiveFailed = false;
 	}
 
 	virtual void stop()
@@ -58,16 +66,37 @@ public:
 
 	// should return what state we're going to.
 	// REMEMBER TO HAVE ENTRY AND STAY states for each application state!
-	virtual size_t next() const { return 0; }
+	virtual size_t next() const { return GAMESTATE; }	// if failure, return FAILSTATE ENUM
 
-
+	
 	// update loop, where 'systems' exist
 	virtual void step()
 	{
 		float dt = sfw::getDeltaTime();
 
-		// maybe spawn some asteroids here.
+		//////////////////////////////////////////////////////
+		// maybe spawn some asteroids here on a timer loop
 
+		timer -= sfw::getDeltaTime();
+		if (timer < 0)
+		{
+			roid_counter++;
+			factory.spawnAsteroid(spr_roid);
+
+			timer = 5.f;
+
+			if (roid_counter > 20)
+			{
+				roid_counter = 0;
+				timer += 5.f;
+			}
+
+			return;
+		}
+
+		// CHECK IF AN ASTEROID MADE IT PAST THE "LINE"
+		// IF SO, SET FAILURE TO TRUE
+		//////////////////////////////////////////////////////
 		for(auto it = factory.begin(); it != factory.end();) // no++!
 		{
 			bool del = false; // does this entity end up dying?
@@ -75,8 +104,10 @@ public:
 
 			// rigidbody update
 			if (e.transform && e.rigidbody)
+			{
 				e.rigidbody->integrate(&e.transform, dt);
-
+				//if(e.rigidbody->useGravity)e.rigidbody->addForce(gravity * e.rigidbody->mass);
+			}
 			// controller update
 			if (e.transform && e.rigidbody && e.controller)
 			{
@@ -87,12 +118,32 @@ public:
 											vec2{ 32,32 }, e.transform->getGlobalAngle(), 200, 1);
 				}
 			}
+
+			if (e.transform && e.rigidbody && e.key)
+			{
+				
+			}
+
+
+
+			// asteroid check/update
+			// if asteroid
+				// did it go past the line
+					// if so, set failure to true
 			// lifetime decay update
+
+
+
 			if (e.lifetime)
 			{
 				e.lifetime->age(dt);
 				if (!e.lifetime->isAlive())
 					del = true;
+			}
+
+			if (e.rigidbody < 500)
+			{
+				
 			}
 
 			// ++ here, because free increments in case of deletions
@@ -103,6 +154,7 @@ public:
 				it.free();
 			}
 		}
+
 
 
 		// Physics system!
@@ -133,8 +185,7 @@ public:
 						}
 					}
 				}
-
-	}
+			}
 
 
 	virtual void draw()	

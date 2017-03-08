@@ -1,7 +1,9 @@
-
+#include "Depart.h"
+#include "splash.h"
 #include "sfwdraw.h"
 #include "GameState.h"
-
+#include "constdecl.h"
+#include "option.h"
 
 /*
 	The main function should be used for application state management.
@@ -12,19 +14,47 @@ void main()
 {
 	sfw::initContext();
 
+	unsigned font = sfw::loadTextureMap("./res/fontmap.png", 16, 16);
 
 	GameState gs;
 
-	gs.init(); // called once
+	Splash splash;
+	Depart depart;
 
-	gs.play(); // Should be called each time the state is transitioned into
+	depart.init(font);
+	splash.init(font);
+	gs.init(); 
+	APP_STATE state = ENTER_SPLASH;
 
 	while (sfw::stepContext())
 	{
-		gs.step(); // called each update
-		gs.draw(); // called each update
+		switch (state)
+		{
+		case ENTER_SPLASH:
+			splash.play();
+		case SPLASH:
+			splash.step();
+			splash.draw();
+			state = splash.next();
+			break;
+		//case ENTER_DEPART:
+		//case DEPART:
+		//	depart.draw();
+		//	state = depart.next();
+		//	break;
+		case ENTER_GAMESTATE:
+			gs.play();
+		case GAMESTATE:
+			gs.step();
+			gs.draw();
+			
+			state = (APP_STATE)gs.next();
+			break;
+//		case ENTER_WIN:
+//			gs.play();
+//		case WIN:
 
-		//gs.next(); Determine the ID of the next state to transition to.
+		}
 	}
 
 	gs.stop(); // should be called each time the state is transitioned out of

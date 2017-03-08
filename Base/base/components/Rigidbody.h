@@ -9,6 +9,10 @@ namespace base
 class Rigidbody
 {
 public:
+	// add gravity here.
+	vec2 gravity = vec2{0, 0};
+	// bool useGravity;
+
 	float drag, mass;
 	vec2 impulse, force, acceleration, velocity; // defaults to 0's
 
@@ -28,7 +32,7 @@ public:
 
 	void integrate(Transform *T, float dt)
 	{
-		acceleration += force / mass;
+		acceleration += force / mass + gravity;
 		velocity += acceleration * dt + impulse / mass;
 		T->setGlobalPosition(T->getGlobalPosition() + velocity * dt);
 		acceleration = -velocity * drag;
@@ -39,8 +43,6 @@ public:
 		T->setGlobalAngle(T->getGlobalAngle() + angularVelocity * dt);
 		angularAcceleration = -angularVelocity * angularDrag;
 		spin = torque = 0;
-
-
 	}
 
 	void draw(const Transform *T, const mat3 &cam)
